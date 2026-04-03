@@ -616,6 +616,22 @@ async function handleLockedPeriodClick(periodId) {
   }
 }
 
+async function maybeRequestRecommendationOnLaunch() {
+  if (!isLikelyVkEnvironment(state.launchParams) || state.recommendationGranted || !state.user?.id) {
+    return;
+  }
+
+  try {
+    await requestRecommendation();
+    state.recommendationGranted = true;
+    writeRecommendation(state.user.id, true);
+    hideNotice();
+    renderTabs();
+  } catch (error) {
+    // Keep app usable if the user dismisses the dialog on launch.
+  }
+}
+
 function renderPeopleList(people) {
   if (!people.length) {
     return `
@@ -709,6 +725,8 @@ function applyDataset({ user, firstLevel, secondLevel, tabData = null, recommend
   renderAll();
   hideNotice();
   setStatus("");
+
+  maybeRequestRecommendationOnLaunch();
 }
 
 function showError(error) {
